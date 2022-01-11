@@ -2,7 +2,10 @@ module Main exposing (..)
 
 import Browser
 import Html
-import Html.Events
+import Html.Attributes
+import Html.Events.Extra.Mouse
+import Svg
+import Svg.Attributes
 
 
 main : Program () Model Msg
@@ -11,33 +14,48 @@ main =
 
 
 type alias Model =
-    Int
+    { timelineMouseOffset : Maybe Float
+    }
 
 
 init : Model
 init =
-    0
+    { timelineMouseOffset = Nothing
+    }
 
 
 type Msg
-    = Increment
-    | Decrement
+    = MouseMoveOnTimeline Html.Events.Extra.Mouse.Event
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Increment ->
-            model + 1
+        MouseMoveOnTimeline event ->
+            { model | timelineMouseOffset = Just (Tuple.first event.offsetPos) }
 
-        Decrement ->
-            model - 1
+
+viewTimeline : Model -> Html.Html Msg
+viewTimeline model =
+    Svg.svg
+        [ Html.Attributes.style "width" "100%"
+        , Svg.Attributes.viewBox "0 0 100 10"
+        ]
+        [ Svg.rect
+            [ Html.Events.Extra.Mouse.onMove MouseMoveOnTimeline
+            , Html.Attributes.style "width" "100%"
+            , Html.Attributes.style "height" "100"
+            , Svg.Attributes.fill "lightblue"
+            ]
+            []
+        ]
 
 
 view : Model -> Html.Html Msg
 view model =
     Html.div []
-        [ Html.button [ Html.Events.onClick Decrement ] [ Html.text "-" ]
-        , Html.div [] [ Html.text (String.fromInt model) ]
-        , Html.button [ Html.Events.onClick Increment ] [ Html.text "+" ]
+        [ viewTimeline model
+        , Html.div []
+            [ Html.text ("offset: " ++ (model.timelineMouseOffset |> Maybe.map String.fromFloat |> Maybe.withDefault "Nothing"))
+            ]
         ]
